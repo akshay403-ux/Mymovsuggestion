@@ -3,18 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const gridContainer = document.getElementById('movie-grid');
     const webseriesGridContainer = document.getElementById('webseries-grid');
     const homeView = document.getElementById('home-view');
-    const detailView = document.getElementById('detail-view');
     const loginView = document.getElementById('login-view');
     const loginForm = document.getElementById('login-form');
     const emailInput = document.getElementById('email');
-    const backBtn = document.getElementById('back-btn');
-
-    // Detail View Elements
-    const detailTitle = document.getElementById('detail-title');
-    const detailRating = document.getElementById('detail-rating');
-    const detailDescription = document.getElementById('detail-description');
-    const detailPoster = document.getElementById('detail-poster');
-    const detailImdbLink = document.getElementById('detail-imdb-link');
 
     // Edit the details for all 10 movies here. 
     // You can update the title, rating (1-10), description, poster, and imdbLink for each movie.
@@ -23,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 1,
             title: "Dhurandhar 1",
             rating: 8.3,
-            rate: 8.3 / 10,
             description: "An underworld saga following a network of criminals, informants and operatives whose lives intersect, navigating covert operations, espionage and betrayals.",
             poster: "D1.png",
             imdbLink: "https://www.imdb.com/title/tt33014583/"
@@ -89,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: "Succession",
             rating: 8.8,
             description: "The Roy family is involved in a constant battle for control of the company.",
-            poster: "Succession.png",
+            poster: "succession.png",
             imdbLink: "https://www.imdb.com/title/tt7660850/"
         },
         {
@@ -102,87 +92,86 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
+    // Initialize Collage Background
+    function initCollage() {
+        const collageContainer = document.createElement('div');
+        collageContainer.id = 'background-collage';
+        document.body.insertBefore(collageContainer, document.body.firstChild);
+
+        // Duplicate the list significantly to ensure the screen is filled with a dense collage
+        const collageItems = [];
+        for (let j = 0; j < 6; j++) {
+            collageItems.push(...movies); // 60 items total
+        }
+        
+        collageItems.forEach((movie, i) => {
+            const item = document.createElement('div');
+            item.className = 'collage-item';
+            item.style.backgroundImage = `url('${movie.poster}')`;
+            
+            // Randomly position across a wider screen area to ensure full coverage
+            const top = -10 + Math.random() * 120; // -10% to 110%
+            const left = -10 + Math.random() * 120; // -10% to 110%
+            const size = 150 + Math.random() * 250; // Width from 150px to 400px (larger)
+            const rot = -40 + Math.random() * 80; // Rotation between -40 and +40 deg
+            
+            item.style.top = `${top}%`;
+            item.style.left = `${left}%`;
+            item.style.width = `${size * 0.66}px`; // 2:3 aspect ratio
+            item.style.height = `${size}px`;
+            item.style.transform = `rotate(${rot}deg)`;
+            
+            // Add a title badge
+            const title = document.createElement('div');
+            title.className = 'collage-title';
+            title.textContent = movie.title;
+            item.appendChild(title);
+            
+            collageContainer.appendChild(item);
+        });
+    }
+
     // Initialize Grid
     function initGrid() {
         const moviesList = movies.slice(0, 5);
         const webseriesList = movies.slice(5, 10);
 
-        moviesList.forEach((movie, index) => {
-            createGridItem(movie, index + 1, gridContainer);
+        moviesList.forEach((movie) => {
+            createGridItem(movie, gridContainer);
         });
 
-        webseriesList.forEach((series, index) => {
-            createGridItem(series, index + 1, webseriesGridContainer);
+        webseriesList.forEach((series) => {
+            createGridItem(series, webseriesGridContainer);
         });
     }
 
-    function createGridItem(item, displayId, container) {
+    function createGridItem(item, container) {
         if (!container) return;
         const gridItem = document.createElement('div');
         gridItem.className = 'grid-item';
-        gridItem.innerHTML = `
-            <span class="grid-number">${displayId}</span>
-            <img class="grid-image" src="${item.poster}" alt="${item.title}">
-        `;
+        
+        // Generate stars
+        let starsHtml = '';
+        for(let i=1; i<=10; i++) {
+            const filled = i <= Math.round(item.rating) ? 'filled' : '';
+            starsHtml += `<span class="star ${filled}">★</span>`;
+        }
 
-        // Event listener for click
-        gridItem.addEventListener('click', () => {
-            showDetailView(item);
-        });
+        gridItem.innerHTML = `
+            <img class="grid-image" src="${item.poster}" alt="${item.title}">
+            <div class="grid-overlay">
+                <h3 class="overlay-title">${item.title}</h3>
+                <div class="overlay-rating">
+                    <div class="stars">${starsHtml}</div>
+                    <span class="rating-value-small">${item.rating}/10</span>
+                </div>
+                <p class="overlay-description">${item.description}</p>
+                <a href="${item.imdbLink}" target="_blank" rel="noopener noreferrer" class="btn-imdb">View on IMDB</a>
+            </div>
+        `;
 
         container.appendChild(gridItem);
     }
-
-    // Show Detail View
-    function showDetailView(movie) {
-        // Populate Data
-        detailTitle.textContent = movie.title;
-        detailDescription.textContent = movie.description;
-        detailPoster.src = movie.poster;
-        detailImdbLink.href = movie.imdbLink;
-
-        // Render Rating Stars (10-star system)
-        detailRating.innerHTML = '';
-        for (let i = 1; i <= 10; i++) {
-            const star = document.createElement('span');
-            star.className = `star ${i <= movie.rating ? 'filled' : ''}`;
-            star.innerHTML = '★';
-            detailRating.appendChild(star);
-        }
-
-        // Show numerical rating
-        const ratingValue = document.getElementById('detail-rating-value');
-        if (ratingValue) {
-            ratingValue.textContent = `${movie.rating}/10`;
-        }
-
-        // Transition Views
-        homeView.classList.remove('active');
-        setTimeout(() => {
-            homeView.classList.add('hidden');
-            detailView.classList.remove('hidden');
-            // Small delay to allow display:block to apply before animating opacity
-            requestAnimationFrame(() => {
-                detailView.classList.add('active');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }, 500); // Wait for fade out
-    }
-
-    // Show Home View (Back button logic)
-    function showHomeView() {
-        detailView.classList.remove('active');
-        setTimeout(() => {
-            detailView.classList.add('hidden');
-            homeView.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                homeView.classList.add('active');
-            });
-        }, 500);
-    }
-
-    // Attach Event Listeners
-    backBtn.addEventListener('click', showHomeView);
 
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
@@ -201,6 +190,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'delft-blue') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'delft-blue');
+            }
+        });
+    }
+
     // Run Initialization
+    initCollage();
     initGrid();
 });
